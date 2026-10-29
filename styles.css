@@ -11,8 +11,8 @@
   --panel: #202b27;
   --lime: #c8f169;
   --coral: #ff765e;
-  --light-square: #dfc18d;
-  --dark-square: #79502f;
+  --light-square: #e8e7e0;
+  --dark-square: #a0aca3;
 }
 
 * { box-sizing: border-box; }
@@ -96,30 +96,30 @@ h1 em { color: var(--lime); font-style: normal; }
 .player-meta strong { color: #e1e9e1; font-size: 12px; font-weight: 600; }
 .player-meta small { color: var(--muted); font: 10px "DM Mono", monospace; }
 .captured { margin-left: auto; color: #aab8ac; font-size: 13px; letter-spacing: 1px; }
-.board-wrap { width: 100%; aspect-ratio: 1; padding: 6px; border: 1px solid #c2945a; border-radius: 5px; background: repeating-linear-gradient(4deg, rgba(238, 195, 132, .14) 0 2px, transparent 2px 8px), linear-gradient(135deg, #442819, #996037 24%, #57321f 25%, #ad7742 52%, #47291a 53%, #98643a 77%, #3d251a); box-shadow: 0 18px 48px rgba(0, 0, 0, .3), inset 0 0 0 2px rgba(232, 192, 132, .24); }
-.board { position: relative; width: 100%; height: 100%; display: grid; grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(8, 1fr); overflow: hidden; border-radius: 2px; }
+.board-wrap { width: 100%; aspect-ratio: 1; padding: 6px; border: 1px solid #818b83; border-radius: 5px; background: linear-gradient(145deg, #6e7a71, #89938b 50%, #626e65); box-shadow: 0 18px 48px rgba(0, 0, 0, .3), inset 0 0 0 2px rgba(231, 230, 223, .3); }
+.board { position: relative; width: 100%; height: 100%; display: grid; grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(8, 1fr); overflow: hidden; border-radius: 2px; container-type: inline-size; }
 .static-board { position: absolute; inset: 0; width: 100%; height: 100%; }
-.static-black { fill: #4a2b1b; stroke: #c59b68; stroke-width: 1px; paint-order: stroke; }
-.static-white { fill: #f7e4bf; stroke: #79552f; stroke-width: 1px; paint-order: stroke; }
+.static-black { fill: #4a514b; stroke: #d3d8d1; stroke-width: 1px; paint-order: stroke; }
+.static-white { fill: #fffdf6; stroke: #566158; stroke-width: 1px; paint-order: stroke; }
 .noscript-note { max-width: 38ch; margin: 8px auto; color: #dce5d8; font-size: 11px; line-height: 1.5; text-align: center; }
 .square { min-width: 0; min-height: 0; position: relative; display: grid; place-items: center; padding: 0; border: 0; border-radius: 0; cursor: pointer; }
-.square.light { background: repeating-linear-gradient(3deg, rgba(112, 72, 33, .09) 0 1px, transparent 1px 5px), linear-gradient(145deg, #ead3a5, #d0a66c); }
-.square.dark { background: repeating-linear-gradient(3deg, rgba(34, 20, 12, .17) 0 1px, transparent 1px 5px), linear-gradient(145deg, #956541, #684328); }
+.square.light { background: linear-gradient(145deg, var(--light-square), #dcded7); }
+.square.dark { background: linear-gradient(145deg, #b7c0b9, var(--dark-square)); }
 .square:focus-visible { z-index: 3; outline: 3px solid var(--coral); outline-offset: -3px; }
 .square.last-move::after { content: ""; position: absolute; inset: 0; background: rgba(200, 241, 105, .25); pointer-events: none; }
 .square.selected { box-shadow: inset 0 0 0 4px var(--coral); z-index: 2; }
 .square.legal::before { content: ""; width: 25%; height: 25%; border-radius: 50%; background: rgba(27, 44, 32, .32); position: absolute; z-index: 1; }
 .square.legal.capture::before { width: 88%; height: 88%; background: transparent; border: 5px solid rgba(255, 118, 94, .72); }
-.piece { position: relative; z-index: 2; font-family: "Apple Symbols", "DejaVu Sans", "Segoe UI Symbol", serif; font-size: 55px; line-height: 1; transform: translateY(-2px); user-select: none; pointer-events: none; }
-.piece.white { color: #f7ead1; -webkit-text-stroke: 1px #58391f; text-shadow: 0 1px 0 #fff9eb, 0 2px 1px rgba(48, 28, 13, .66); }
-.piece.black { color: #2b2118; -webkit-text-stroke: 1px #c49a63; text-shadow: 0 2px 1px rgba(29, 17, 9, .8); }
-.static-black { fill: #2b2118; stroke: #c49a63; stroke-width: 1px; paint-order: stroke; }
-.static-white { fill: #f7ead1; stroke: #58391f; stroke-width: 1px; paint-order: stroke; }
+.piece { position: relative; z-index: 2; font-family: "Apple Symbols", "DejaVu Sans", "Segoe UI Symbol", serif; font-size: clamp(22px, 8.5cqw, 52px); line-height: 1; transform: translateY(-2px); user-select: none; pointer-events: none; }
+.piece.white { color: #fffdf6; -webkit-text-stroke: 1px #566158; text-shadow: 0 1px 0 #fff, 0 2px 1px rgba(35, 43, 37, .42); }
+.piece.black { color: #2b332d; -webkit-text-stroke: 1px #e1e5de; text-shadow: 0 2px 1px rgba(29, 35, 30, .58); }
+.static-black { fill: #2b332d; stroke: #e1e5de; stroke-width: 1px; paint-order: stroke; }
+.static-white { fill: #fffdf6; stroke: #566158; stroke-width: 1px; paint-order: stroke; }
 .coord { position: absolute; z-index: 3; font: 500 9px/1 "DM Mono", monospace; pointer-events: none; }
 .coord.rank { top: 4px; left: 4px; }
 .coord.file { right: 4px; bottom: 3px; }
-.light .coord { color: #72877a; }
-.dark .coord { color: #e1e9dc; }
+.light .coord { color: #65766b; }
+.dark .coord { color: #39473e; }
 .board-footer { max-width: 610px; margin: 11px auto 0; display: flex; align-items: center; justify-content: space-between; color: var(--muted); font-size: 10px; }
 .note-icon { margin-right: 5px; color: var(--lime); font-size: 14px; }
 .board-coordinates { color: #78877e; font: 10px "DM Mono", monospace; }
@@ -260,7 +260,6 @@ h1 em { color: var(--lime); font-style: normal; }
   .eyebrow { font-size: 8px; }
   .game-clock { min-width: 88px; padding: 7px 8px; font-size: 9px; }
   .board-wrap { padding: 3px; }
-  .piece { font-size: 40px; }
   .coord { font-size: 7px; }
   .coord.rank { top: 3px; left: 3px; }
   .coord.file { right: 3px; bottom: 2px; }
