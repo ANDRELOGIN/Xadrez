@@ -16,6 +16,7 @@
 }
 
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 body { margin: 0; min-width: 320px; min-height: 100vh; background: radial-gradient(ellipse at 29% 42%, #25332d 0, #17201e 56%, #141b19 100%); }
 button, select { font: inherit; }
 button { color: inherit; }
@@ -33,6 +34,29 @@ a { color: inherit; text-decoration: none; }
 .online-dot, .clock-dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; background: var(--lime); box-shadow: 0 0 12px rgba(200, 241, 105, .52); }
 .profile-button { width: 32px; height: 32px; margin-left: 12px; border: 1px solid #536359; border-radius: 50%; background: #2b3931; color: var(--lime); font: 700 12px "Manrope", sans-serif; }
 .piece-library { position: absolute; width: 0; height: 0; overflow: hidden; }
+.mode-picker { width: min(920px, calc(100% - 48px)); margin: auto; padding: 48px 0; }
+.mode-picker > .eyebrow { margin-bottom: 14px; }
+.mode-picker h1 { font-size: clamp(32px, 5vw, 52px); line-height: 1.12; }
+.mode-intro { margin: 16px 0 32px; color: var(--muted); font-size: 15px; }
+.mode-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+.mode-card { min-height: 245px; padding: 24px; border: 1px solid rgba(206, 225, 209, .16); border-radius: 9px; background: rgba(29, 39, 35, .76); display: flex; flex-direction: column; align-items: flex-start; text-align: left; cursor: pointer; transition: border-color .2s, transform .2s, background .2s; }
+.mode-card:hover { border-color: #8a9e72; background: rgba(37, 51, 43, .95); transform: translateY(-2px); }
+.mode-card:focus-visible { outline: 3px solid var(--lime); outline-offset: 3px; }
+.mode-icon { min-height: 55px; color: var(--lime); font: 42px/1 "Apple Symbols", "Segoe UI Symbol", serif; letter-spacing: -12px; }
+.mode-card strong { margin-top: 12px; color: var(--ink); font: 700 22px "Manrope", sans-serif; }
+.mode-card > span:not(.mode-icon):not(.mode-action) { margin-top: 7px; color: var(--muted); font-size: 13px; line-height: 1.5; }
+.mode-action { margin-top: auto; padding-top: 18px; color: var(--lime); font-size: 12px; font-weight: 700; }
+.mode-action span { margin-left: 6px; }
+.multiplayer-card .mode-icon { letter-spacing: -18px; }
+.mode-footnote { margin: 20px 0 0; color: var(--quiet); font: 10px "DM Mono", monospace; text-align: center; }
+.queue-screen { width: min(540px, calc(100% - 40px)); min-height: 440px; margin: auto; padding: 50px 28px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+.queue-spinner { width: 38px; height: 38px; margin-bottom: 24px; border: 3px solid rgba(200, 241, 105, .2); border-top-color: var(--lime); border-radius: 50%; animation: queue-spin .85s linear infinite; }
+@keyframes queue-spin { to { transform: rotate(360deg); } }
+.queue-screen .eyebrow { margin-bottom: 9px; }
+.queue-screen h1 { font-size: clamp(26px, 5vw, 36px); }
+.queue-message { margin: 12px 0 0; color: var(--lime); font-size: 14px; }
+.queue-note { max-width: 38ch; margin: 14px 0 0; color: var(--muted); font-size: 11px; line-height: 1.6; }
+.queue-actions { display: flex; align-items: center; gap: 12px; margin-top: 25px; }
 .workspace { width: 100%; margin: 44px auto 0; display: grid; grid-template-columns: minmax(0, 1fr) 338px; grid-template-rows: auto auto; column-gap: clamp(36px, 6vw, 92px); row-gap: 22px; align-items: start; }
 .play-area { min-width: 0; max-width: 760px; justify-self: center; width: 100%; }
 .play-heading { min-height: 78px; display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; }
@@ -187,6 +211,13 @@ h1 em { color: var(--lime); font-style: normal; }
   .site-footer { display: none; }
 }
 @media (max-width: 680px) {
+  .mode-picker { width: calc(100% - 28px); padding: 42px 0; }
+  .mode-options { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .mode-card { min-height: 190px; padding: 18px; }
+  .mode-icon { min-height: 42px; font-size: 34px; }
+  .mode-card strong { margin-top: 7px; font-size: 19px; }
+  .mode-action { padding-top: 12px; }
+  .queue-screen { min-height: 360px; padding: 36px 14px; }
   .workspace { grid-template-columns: minmax(0, 1fr); row-gap: 18px; margin-top: 30px; }
   .play-area { max-width: 610px; }
   .study-panel { grid-row: 2; max-width: 610px; width: 100%; justify-self: center; }

@@ -12,6 +12,17 @@ powershell -ExecutionPolicy Bypass -File .\serve.ps1
 
 Depois abra `http://localhost:4173/` no navegador. O projeto não requer Node.js. É necessária conexão com a internet para carregar `chess.js` e as fontes; os arquivos do engine ficam locais no projeto.
 
+## Multiplayer
+
+O modo multiplayer usa um servidor WebSocket separado do GitHub Pages. Para publicar:
+
+1. Envie os arquivos do projeto, incluindo `server.js`, `package.json` e `render.yaml`, para a branch `main`.
+2. No Render, escolha **New > Blueprint** e conecte o repositório `ANDRELOGIN/Xadrez`. O Render usará `render.yaml` para criar o serviço gratuito `xadrez-multiplayer`.
+3. Aguarde o serviço ficar **Live** e confirme que `https://xadrez-multiplayer.onrender.com/health` responde `ok`.
+4. O site continua disponível em `https://andrelogin.github.io/Xadrez/`; o multiplayer pode demorar alguns instantes para responder quando o servidor gratuito estiver iniciando após inatividade.
+
+O servidor valida os lances com `chess.js` e aceita conexões do GitHub Pages e dos endereços locais de desenvolvimento configurados em `ALLOWED_ORIGINS`.
+
 ## Publicar no GitHub Pages
 
 O workflow em `.github/workflows/pages.yml` publica o site automaticamente quando há um push na branch `main`.

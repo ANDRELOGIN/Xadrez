@@ -1,0 +1,17 @@
+{
+  "name": "xeque-multiplayer",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Servidor de partidas multiplayer para o site Xeque",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "chess.js": "1.4.0",
+    "ws": "8.22.0"
+  }
+}

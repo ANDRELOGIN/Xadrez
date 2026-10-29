@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="styles.css?v=2" />
+    <link rel="stylesheet" href="styles.css?v=3" />
     <script type="module" src="app.js"></script>
   </head>
   <body>
@@ -28,14 +28,47 @@
     <div class="app-shell">
       <header class="topbar">
         <a class="wordmark" href="#" aria-label="Xeque, início"><span class="brand-mark">x</span>xeque<span class="brand-period">.</span></a>
-        <nav class="main-nav" aria-label="Navegação principal">
+        <nav class="main-nav" aria-label="Navegação principal" hidden>
           <a class="nav-link active" href="#partida">Partida</a>
           <a class="nav-link" href="#estudo">Estudo</a>
         </nav>
-        <div class="topbar-right"><span class="online-dot"></span><span class="status-label">mesa aberta</span><button class="profile-button" type="button" aria-label="Perfil">L</button></div>
+        <div class="topbar-right"><span class="online-dot"></span><span class="status-label" id="site-status">escolha um modo</span><button class="profile-button" type="button" aria-label="Perfil">L</button></div>
       </header>
 
-      <main class="workspace" id="partida">
+      <main class="mode-picker" id="mode-picker">
+        <p class="eyebrow">XEQUE <span>·</span> JOGUE DO SEU JEITO</p>
+        <h1>Uma partida começa<br />com <em>uma escolha.</em></h1>
+        <p class="mode-intro">Jogue contra o Stockfish ou encontre alguém para uma partida ao vivo.</p>
+        <div class="mode-options">
+          <button class="mode-card" id="solo-mode" type="button">
+            <span class="mode-icon" aria-hidden="true">♞</span>
+            <strong>Solo</strong>
+            <span>Enfrente o Stockfish no seu ritmo.</span>
+            <span class="mode-action">Jogar contra o engine <span aria-hidden="true">→</span></span>
+          </button>
+          <button class="mode-card multiplayer-card" id="multiplayer-mode" type="button">
+            <span class="mode-icon" aria-hidden="true">♟♟</span>
+            <strong>Multiplayer</strong>
+            <span>Entre na fila e encontre outro jogador online.</span>
+            <span class="mode-action">Encontrar adversário <span aria-hidden="true">→</span></span>
+          </button>
+        </div>
+        <p class="mode-footnote">Multiplayer anônimo · sem cadastro</p>
+      </main>
+
+      <main class="queue-screen" id="queue-screen" hidden>
+        <span class="queue-spinner" aria-hidden="true"></span>
+        <p class="eyebrow">PARTIDA AO VIVO</p>
+        <h1 id="queue-title">Procurando adversário</h1>
+        <p class="queue-message" id="queue-message" role="status" aria-live="polite">Conectando à sala de partidas...</p>
+        <p class="queue-note">A primeira conexão pode demorar um pouco enquanto o servidor gratuito inicia.</p>
+        <div class="queue-actions">
+          <button class="new-game-button" id="queue-retry" type="button" hidden>Tentar novamente</button>
+          <button class="text-action" id="queue-cancel" type="button">Cancelar</button>
+        </div>
+      </main>
+
+      <main class="workspace" id="partida" hidden>
         <section class="play-area" aria-label="Tabuleiro de xadrez">
           <div class="play-heading">
             <div><p class="eyebrow">PARTIDA LIVRE <span>·</span> 001</p><h1>Seu próximo <em>movimento.</em></h1></div>
@@ -44,7 +77,7 @@
 
           <div class="board-row">
             <div class="player-rail player-top">
-              <span class="player-token engine-token">S</span><div class="player-meta"><strong>Stockfish</strong><small id="engine-state">carregando engine</small></div><span class="captured" id="captured-top"></span>
+              <span class="player-token engine-token">S</span><div class="player-meta"><strong id="opponent-name">Stockfish</strong><small id="engine-state">carregando engine</small></div><span class="captured" id="captured-top"></span>
             </div>
             <div class="board-wrap">
               <div class="board" id="board" role="grid" aria-label="Tabuleiro de xadrez">
@@ -113,7 +146,7 @@
           </div>
         </aside>
 
-        <section class="control-strip" aria-label="Controles da partida">
+        <section class="control-strip" id="game-controls" aria-label="Controles da partida" hidden>
           <div class="control-group">
             <label for="side-select">Jogar de</label>
             <select id="side-select"><option value="w">Brancas</option><option value="b">Pretas</option></select>
@@ -123,11 +156,12 @@
             <select id="depth-select"><option value="4">Tranquilo</option><option value="8" selected>Clube</option><option value="12">Avançado</option></select>
           </div>
           <div class="control-spacer"></div>
+          <button class="text-action" id="mode-menu-button" type="button">← Modos</button>
           <button class="text-action" id="undo-button" type="button" title="Desfazer último lance"><span aria-hidden="true">↶</span> Desfazer</button>
           <button class="new-game-button" id="new-game-button" type="button"><span aria-hidden="true">＋</span> Nova partida</button>
         </section>
       </main>
-      <footer class="site-footer"><span>FEITO PARA PENSAR UM LANCE À FRENTE</span><span>STOCKFISH 19 <i>·</i> ENGINE NO NAVEGADOR</span></footer>
+      <footer class="site-footer" id="site-footer" hidden><span>FEITO PARA PENSAR UM LANCE À FRENTE</span><span>STOCKFISH 19 <i>·</i> ENGINE NO NAVEGADOR</span></footer>
     </div>
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
   </body>

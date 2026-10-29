@@ -30,7 +30,8 @@ const CHESS_QUOTES = [
   { text: "Os erros estão todos no tabuleiro, esperando para serem cometidos.", author: "Savielly Tartakower" },
 ];
 
-const game = new Chess();
+const MULTIPLAYER_SERVER_URL = "wss://xadrez-multiplayer.onrender.com";
+let game = new Chess();
 const boardElement = document.querySelector("#board");
 const moveListElement = document.querySelector("#move-list");
 const sideSelect = document.querySelector("#side-select");
@@ -38,10 +39,23 @@ const depthSelect = document.querySelector("#depth-select");
 const engineState = document.querySelector("#engine-state");
 const turnLabel = document.querySelector("#turn-label");
 const toast = document.querySelector("#toast");
+const modePicker = document.querySelector("#mode-picker");
+const queueScreen = document.querySelector("#queue-screen");
+const workspace = document.querySelector("#partida");
+const gameControls = document.querySelector("#game-controls");
+const siteFooter = document.querySelector("#site-footer");
+const mainNav = document.querySelector(".main-nav");
+const siteStatus = document.querySelector("#site-status");
+const queueMessage = document.querySelector("#queue-message");
+const queueRetry = document.querySelector("#queue-retry");
 let humanColor = "w";
 let selectedSquare = null;
 let legalMoves = [];
 let currentPly = 0;
+let mode = "menu";
+let multiplayerSocket = null;
+let multiplayerGameId = null;
+let opponentConnected = false;
 let engineReady = false;
 let engineThinking = false;
 let engineGeneration = 0;
@@ -54,6 +68,190 @@ function showToast(message) {
   toast.classList.add("visible");
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => toast.classList.remove("visible"), 3000);
+}
+
+function showGame() {
+  modePicker.hidden = true;
+  queueScreen.hidden = true;
+  workspace.hidden = false;
+  gameControls.hidden = false;
+  siteFooter.hidden = false;
+  mainNav.hidden = false;
+}
+
+function resetGame() {
+  game.reset();
+  currentPly = 0;
+  selectedSquare = null;
+  legalMoves = [];
+  render();
+}
+
+function closeMultiplayerConnection() {
+  const socket = multiplayerSocket;
+  multiplayerSocket = null;
+  multiplayerGameId = null;
+  opponentConnected = false;
+  if (!socket) return;
+  socket.onclose = null;
+  socket.onerror = null;
+  socket.onmessage = null;
+  socket.close();
+}
+
+function returnToModePicker() {
+  invalidateEngine();
+  closeMultiplayerConnection();
+  mode = "menu";
+  resetGame();
+  modePicker.hidden = false;
+  queueScreen.hidden = true;
+  workspace.hidden = true;
+  gameControls.hidden = true;
+  siteFooter.hidden = true;
+  mainNav.hidden = true;
+  siteStatus.textContent = "escolha um modo";
+  engineState.textContent = engineReady ? "Stockfish pronto" : "carregando engine";
+  document.querySelector("#opponent-name").textContent = "Stockfish";
+  queueRetry.hidden = true;
+}
+
+function selectSoloMode() {
+  invalidateEngine();
+  closeMultiplayerConnection();
+  mode = "solo";
+  humanColor = "w";
+  sideSelect.value = humanColor;
+  resetGame();
+  siteStatus.textContent = "partida solo";
+  engineState.textContent = engineReady ? "Stockfish pronto" : "carregando engine";
+  document.querySelector("#opponent-name").textContent = "Stockfish";
+  showGame();
+  initializeEngine();
+}
+
+function setQueueMessage(title, message, retry = false) {
+  document.querySelector("#queue-title").textContent = title;
+  queueMessage.textContent = message;
+  queueRetry.hidden = !retry;
+}
+
+function startMultiplayerSearch() {
+  invalidateEngine();
+  closeMultiplayerConnection();
+  mode = "queue";
+  opponentConnected = false;
+  setQueueMessage("Procurando adversário", "Conectando à sala de partidas...");
+  modePicker.hidden = true;
+  queueScreen.hidden = false;
+  workspace.hidden = true;
+  gameControls.hidden = true;
+  siteFooter.hidden = true;
+  mainNav.hidden = true;
+  siteStatus.textContent = "conectando";
+
+  let socket;
+  try {
+    socket = new WebSocket(MULTIPLAYER_SERVER_URL);
+  } catch (error) {
+    setQueueMessage("Não foi possível conectar", "Tente novamente em instantes.", true);
+    siteStatus.textContent = "multiplayer indisponível";
+    return;
+  }
+  multiplayerSocket = socket;
+
+  socket.onopen = () => {
+    if (multiplayerSocket !== socket || mode !== "queue") return;
+    socket.send(JSON.stringify({ type: "join_queue" }));
+    siteStatus.textContent = "buscando jogador";
+  };
+  socket.onmessage = ({ data }) => {
+    if (multiplayerSocket !== socket) return;
+    let message;
+    try {
+      message = JSON.parse(data);
+    } catch (error) {
+      showToast("O servidor enviou uma resposta inválida.");
+      return;
+    }
+
+    if (message.type === "queued" && mode === "queue") {
+      setQueueMessage("Procurando adversário", "Você está na fila. Assim que alguém entrar, a partida começa.");
+      return;
+    }
+    if (message.type === "matched" && mode === "queue") {
+      mode = "multiplayer";
+      multiplayerGameId = message.gameId;
+      humanColor = message.color;
+      opponentConnected = true;
+      game.reset();
+      currentPly = 0;
+      selectedSquare = null;
+      legalMoves = [];
+      document.querySelector("#opponent-name").textContent = "Adversário";
+      engineState.textContent = "jogando ao vivo";
+      siteStatus.textContent = "multiplayer ao vivo";
+      showGame();
+      render();
+      return;
+    }
+    if (message.type === "game_state" && mode === "multiplayer" && message.gameId === multiplayerGameId) {
+      const synchronizedGame = new Chess();
+      try {
+        for (const move of message.history) {
+          synchronizedGame.move({ from: move.from, to: move.to, promotion: move.promotion });
+        }
+      } catch (error) {
+        showToast("Não foi possível sincronizar a posição da partida.");
+        return;
+      }
+      game = synchronizedGame;
+      currentPly = game.history().length;
+      selectedSquare = null;
+      legalMoves = [];
+      render();
+      if (message.gameOver) {
+        showToast(message.result);
+      }
+      return;
+    }
+    if (message.type === "opponent_left" && mode === "multiplayer") {
+      opponentConnected = false;
+      engineState.textContent = "adversário desconectado";
+      siteStatus.textContent = "partida encerrada";
+      updateStatus();
+      showToast("Seu adversário saiu da partida.");
+      return;
+    }
+    if (message.type === "error") {
+      if (mode === "queue") {
+        setQueueMessage("Não foi possível entrar na fila", message.message, true);
+        siteStatus.textContent = "multiplayer indisponível";
+      }
+      showToast(message.message);
+    }
+  };
+  socket.onerror = () => {
+    if (multiplayerSocket !== socket) return;
+    if (mode === "queue") {
+      setQueueMessage("Servidor indisponível", "O servidor pode estar iniciando. Tente novamente em instantes.", true);
+      siteStatus.textContent = "multiplayer indisponível";
+    }
+  };
+  socket.onclose = () => {
+    if (multiplayerSocket !== socket) return;
+    multiplayerSocket = null;
+    if (mode === "queue") {
+      setQueueMessage("Conexão encerrada", "Não foi possível manter a conexão com a sala.", true);
+      siteStatus.textContent = "multiplayer indisponível";
+    } else if (mode === "multiplayer") {
+      opponentConnected = false;
+      engineState.textContent = "conexão interrompida";
+      siteStatus.textContent = "conexão interrompida";
+      updateStatus();
+      showToast("A conexão da partida foi interrompida.");
+    }
+  };
 }
 
 function initializeEngine() {
@@ -239,21 +437,32 @@ function updateMentor(history, position) {
 function updateStatus() {
   const moves = game.history({ verbose: true });
   const moveCount = Math.ceil(moves.length / 2);
+  const isMultiplayer = mode === "multiplayer";
   document.querySelector("#move-count").textContent = `${moveCount} ${moveCount === 1 ? "lance" : "lances"}`;
   document.querySelector("#player-state").textContent = humanColor === "w" ? "brancas" : "pretas";
+  document.querySelector(".engine-token").textContent = isMultiplayer ? "•" : "S";
+  document.querySelector("#opponent-name").textContent = isMultiplayer ? "Adversário" : "Stockfish";
   const topIsWhite = humanColor === "b";
   const capturedTop = moves.filter((move) => move.captured && move.color === (topIsWhite ? "w" : "b")).map((move) => PIECES[`${move.color === "w" ? "b" : "w"}${move.captured}`]).join(" ");
   const capturedBottom = moves.filter((move) => move.captured && move.color === (humanColor === "w" ? "w" : "b")).map((move) => PIECES[`${move.color === "w" ? "b" : "w"}${move.captured}`]).join(" ");
   document.querySelector("#captured-top").textContent = capturedTop;
   document.querySelector("#captured-bottom").textContent = capturedBottom;
 
-  if (game.isCheckmate()) turnLabel.textContent = game.turn() === humanColor ? "Xeque-mate" : "Xeque-mate: você venceu";
+  if (game.isCheckmate()) turnLabel.textContent = isMultiplayer
+    ? game.turn() === humanColor ? "Xeque-mate: você perdeu" : "Xeque-mate: você venceu"
+    : game.turn() === humanColor ? "Xeque-mate" : "Xeque-mate: você venceu";
   else if (game.isDraw()) turnLabel.textContent = "Empate";
-  else if (game.isCheck()) turnLabel.textContent = game.turn() === humanColor ? "Você está em xeque" : "Engine em xeque";
+  else if (game.isCheck()) turnLabel.textContent = game.turn() === humanColor ? "Você está em xeque" : isMultiplayer ? "Adversário em xeque" : "Engine em xeque";
   else if (currentPly !== moves.length) turnLabel.textContent = "Revendo partida";
-  else turnLabel.textContent = game.turn() === humanColor ? "Sua vez" : engineThinking ? "Engine pensando" : "Vez do engine";
+  else if (isMultiplayer && !opponentConnected) turnLabel.textContent = "Partida encerrada";
+  else turnLabel.textContent = game.turn() === humanColor ? "Sua vez" : isMultiplayer ? "Vez do adversário" : engineThinking ? "Engine pensando" : "Vez do engine";
 
-  document.querySelector("#undo-button").disabled = moves.length === 0 || engineThinking;
+  document.querySelector("#undo-button").disabled = isMultiplayer || moves.length === 0 || engineThinking;
+  sideSelect.disabled = isMultiplayer;
+  depthSelect.disabled = isMultiplayer;
+  document.querySelector("#new-game-button").innerHTML = isMultiplayer
+    ? "Encontrar outro adversário"
+    : '<span aria-hidden="true">＋</span> Nova partida';
   document.querySelector("#first-move").disabled = currentPly === 0;
   document.querySelector("#previous-move").disabled = currentPly === 0;
   document.querySelector("#next-move").disabled = currentPly >= moves.length;
@@ -271,7 +480,7 @@ function render() {
 }
 
 function maybeStartEngine() {
-  if (!engineReady || engineThinking || game.isGameOver() || game.turn() === humanColor) return;
+  if (mode !== "solo" || !engineReady || engineThinking || game.isGameOver() || game.turn() === humanColor) return;
   engineThinking = true;
   engineGeneration += 1;
   engineState.textContent = "calculando lance…";
@@ -289,18 +498,38 @@ function invalidateEngine() {
 
 function onSquareClick(event) {
   const square = event.target.closest(".square")?.dataset.square;
-  if (!square || currentPly !== game.history().length || game.turn() !== humanColor || game.isGameOver() || engineThinking) return;
+  const canPlay = mode === "solo" || mode === "multiplayer" && opponentConnected && multiplayerSocket?.readyState === WebSocket.OPEN;
+  if (!square || !canPlay || currentPly !== game.history().length || game.turn() !== humanColor || game.isGameOver() || engineThinking) return;
   const piece = game.get(square);
   if (selectedSquare && legalMoves.some((move) => move.to === square)) {
+    const from = selectedSquare;
+    let move;
     try {
-      game.move({ from: selectedSquare, to: square, promotion: "q" });
-      currentPly = game.history().length;
-      selectedSquare = null;
-      legalMoves = [];
-      render();
-      maybeStartEngine();
+      move = game.move({ from, to: square, promotion: "q" });
     } catch (error) {
       showToast("Esse lance não é permitido.");
+      return;
+    }
+    currentPly = game.history().length;
+    selectedSquare = null;
+    legalMoves = [];
+    render();
+    if (mode === "multiplayer") {
+      try {
+        multiplayerSocket.send(JSON.stringify({
+          type: "move",
+          gameId: multiplayerGameId,
+          move: { from: move.from, to: move.to, promotion: move.promotion },
+        }));
+        engineState.textContent = "lance enviado";
+      } catch (error) {
+        game.undo();
+        currentPly = game.history().length;
+        render();
+        showToast("Não foi possível enviar o lance. Verifique a conexão.");
+      }
+    } else {
+      maybeStartEngine();
     }
     return;
   }
@@ -315,16 +544,22 @@ function onSquareClick(event) {
 }
 
 boardElement.addEventListener("click", onSquareClick);
+document.querySelector("#solo-mode").addEventListener("click", selectSoloMode);
+document.querySelector("#multiplayer-mode").addEventListener("click", startMultiplayerSearch);
+document.querySelector("#queue-cancel").addEventListener("click", returnToModePicker);
+document.querySelector("#queue-retry").addEventListener("click", startMultiplayerSearch);
+document.querySelector("#mode-menu-button").addEventListener("click", returnToModePicker);
 document.querySelector("#new-game-button").addEventListener("click", () => {
+  if (mode === "multiplayer") {
+    startMultiplayerSearch();
+    return;
+  }
   invalidateEngine();
-  game.reset();
-  currentPly = 0;
-  selectedSquare = null;
-  legalMoves = [];
-  render();
+  resetGame();
   maybeStartEngine();
 });
 document.querySelector("#undo-button").addEventListener("click", () => {
+  if (mode !== "solo") return;
   invalidateEngine();
   if (game.history().length) game.undo();
   if (game.history().length && game.turn() !== humanColor) game.undo();
@@ -334,6 +569,7 @@ document.querySelector("#undo-button").addEventListener("click", () => {
   render();
 });
 sideSelect.addEventListener("change", () => {
+  if (mode !== "solo") return;
   humanColor = sideSelect.value;
   invalidateEngine();
   currentPly = game.history().length;
@@ -352,4 +588,3 @@ document.querySelector("#quote-next").addEventListener("click", () => {
 });
 
 render();
-setTimeout(initializeEngine, 100);
