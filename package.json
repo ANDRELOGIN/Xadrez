@@ -5,13 +5,15 @@
   "description": "Servidor de partidas multiplayer para o site Xeque",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "test": "node --test"
   },
   "engines": {
     "node": ">=22"
   },
   "dependencies": {
     "chess.js": "1.4.0",
+    "pg": "8.16.3",
     "ws": "8.22.0"
   }
 }

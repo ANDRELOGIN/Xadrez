@@ -31,6 +31,9 @@ const CHESS_QUOTES = [
 ];
 
 const MULTIPLAYER_SERVER_URL = "wss://xadrez-multiplayer-qxxf.onrender.com";
+const MULTIPLAYER_API_URL = "https://xadrez-multiplayer-qxxf.onrender.com";
+const GUEST_TOKEN_STORAGE_KEY = "xeque-multiplayer-guest-token";
+const RATING_API_TIMEOUT_MS = 8000;
 let game = new Chess();
 const boardElement = document.querySelector("#board");
 const moveListElement = document.querySelector("#move-list");
@@ -56,6 +59,12 @@ let mode = "menu";
 let multiplayerSocket = null;
 let multiplayerGameId = null;
 let opponentConnected = false;
+let multiplayerOpponentName = "Adversário";
+let opponentRating = null;
+let playerRating = null;
+let guestToken = null;
+let guestProfileRequest = null;
+let fallbackPlayerId = null;
 let engineReady = false;
 let engineThinking = false;
 let engineGeneration = 0;
@@ -68,6 +77,129 @@ function showToast(message) {
   toast.classList.add("visible");
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => toast.classList.remove("visible"), 3000);
+}
+
+function updateRatingSummary(player) {
+  document.querySelector("#rating-value").textContent = String(player.rating);
+  document.querySelector("#rating-games").textContent = `${player.gamesPlayed} ${player.gamesPlayed === 1 ? "partida" : "partidas"}`;
+  document.querySelector("#player-handle").textContent = player.name;
+}
+
+function renderLeaderboard(players) {
+  const leaderboard = document.querySelector("#leaderboard");
+  leaderboard.replaceChildren();
+  if (!players.length) {
+    const empty = document.createElement("li");
+    empty.className = "leaderboard-empty";
+    empty.textContent = "Jogue uma partida multiplayer para entrar no ranking.";
+    leaderboard.append(empty);
+    return;
+  }
+  players.forEach((player, index) => {
+    const row = document.createElement("li");
+    row.className = "leaderboard-row";
+    const rank = document.createElement("span");
+    rank.className = "leaderboard-rank";
+    rank.textContent = String(index + 1).padStart(2, "0");
+    const name = document.createElement("span");
+    name.className = "leaderboard-name";
+    name.textContent = player.name;
+    const rating = document.createElement("strong");
+    rating.className = "leaderboard-rating";
+    rating.textContent = String(player.rating);
+    row.append(rank, name, rating);
+    leaderboard.append(row);
+  });
+}
+
+async function fetchRatingApi(path, options = {}) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), RATING_API_TIMEOUT_MS);
+  try {
+    return await fetch(`${MULTIPLAYER_API_URL}${path}`, { ...options, signal: controller.signal });
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+function getFallbackPlayerId() {
+  if (!fallbackPlayerId) fallbackPlayerId = crypto.randomUUID();
+  return fallbackPlayerId;
+}
+
+async function ensureGuestProfile() {
+  if (guestToken) return { token: guestToken, player: playerRating };
+  if (guestProfileRequest) return guestProfileRequest;
+  guestProfileRequest = (async () => {
+    let storedToken = null;
+    try {
+      storedToken = localStorage.getItem(GUEST_TOKEN_STORAGE_KEY);
+    } catch (error) {
+      console.error("Não foi possível acessar o armazenamento do navegador:", error);
+    }
+
+    if (storedToken) {
+      const response = await fetchRatingApi("/api/rating", {
+        headers: { authorization: `Bearer ${storedToken}` },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        guestToken = storedToken;
+        playerRating = data.player;
+        return { token: guestToken, player: playerRating };
+      }
+      if (response.status !== 401 && response.status !== 503) {
+        throw new Error(`O servidor de rating respondeu ${response.status}.`);
+      }
+      if (response.status === 503) return null;
+      try {
+        localStorage.removeItem(GUEST_TOKEN_STORAGE_KEY);
+      } catch (error) {
+        console.error("Não foi possível remover um perfil de visitante inválido:", error);
+      }
+    }
+
+    const response = await fetchRatingApi("/api/guest", { method: "POST" });
+    if (response.status === 503) return null;
+    if (!response.ok) throw new Error(`Não foi possível criar o perfil de visitante (${response.status}).`);
+    const data = await response.json();
+    guestToken = data.token;
+    playerRating = data.player;
+    try {
+      localStorage.setItem(GUEST_TOKEN_STORAGE_KEY, guestToken);
+    } catch (error) {
+      console.error("Não foi possível salvar o perfil de visitante neste navegador:", error);
+    }
+    return { token: guestToken, player: playerRating };
+  })();
+  try {
+    return await guestProfileRequest;
+  } finally {
+    guestProfileRequest = null;
+  }
+}
+
+async function loadRatingDashboard() {
+  try {
+    const profile = await ensureGuestProfile();
+    if (!profile) throw new Error("O servidor de rating ainda não está configurado.");
+    updateRatingSummary(profile.player);
+    const response = await fetchRatingApi("/api/leaderboard?limit=5");
+    if (!response.ok) throw new Error(`O ranking respondeu ${response.status}.`);
+    const data = await response.json();
+    renderLeaderboard(data.players);
+  } catch (error) {
+    console.error("Não foi possível carregar o rating multiplayer:", error);
+    document.querySelector("#rating-value").textContent = "—";
+    document.querySelector("#rating-games").textContent = "Rating indisponível";
+    document.querySelector("#player-handle").textContent = "Visitante";
+    const leaderboard = document.querySelector("#leaderboard");
+    leaderboard.replaceChildren();
+    const unavailable = document.createElement("li");
+    unavailable.className = "leaderboard-empty";
+    unavailable.textContent = "O ranking multiplayer está temporariamente indisponível.";
+    leaderboard.append(unavailable);
+  }
 }
 
 function showGame() {
@@ -92,6 +224,8 @@ function closeMultiplayerConnection() {
   multiplayerSocket = null;
   multiplayerGameId = null;
   opponentConnected = false;
+  multiplayerOpponentName = "Adversário";
+  opponentRating = null;
   if (!socket) return;
   socket.onclose = null;
   socket.onerror = null;
@@ -162,8 +296,20 @@ function startMultiplayerSearch() {
 
   socket.onopen = () => {
     if (multiplayerSocket !== socket || mode !== "queue") return;
-    socket.send(JSON.stringify({ type: "join_queue" }));
-    siteStatus.textContent = "buscando jogador";
+    ensureGuestProfile().then((profile) => {
+      if (multiplayerSocket !== socket || mode !== "queue") return;
+      const identity = profile?.token
+        ? { playerToken: profile.token }
+        : { playerId: getFallbackPlayerId() };
+      socket.send(JSON.stringify({ type: "join_queue", ...identity }));
+      siteStatus.textContent = "buscando jogador";
+    }).catch((error) => {
+      console.error("Não foi possível preparar o perfil para a partida:", error);
+      if (multiplayerSocket !== socket || mode !== "queue") return;
+      showToast("Rating indisponível; tentando entrar como visitante.");
+      socket.send(JSON.stringify({ type: "join_queue", playerId: getFallbackPlayerId() }));
+      siteStatus.textContent = "buscando jogador";
+    });
   };
   socket.onmessage = ({ data }) => {
     if (multiplayerSocket !== socket) return;
@@ -184,6 +330,9 @@ function startMultiplayerSearch() {
       multiplayerGameId = message.gameId;
       humanColor = message.color;
       opponentConnected = true;
+      playerRating = message.playerRating === null ? playerRating : { ...playerRating, rating: message.playerRating };
+      opponentRating = message.opponentRating;
+      multiplayerOpponentName = message.opponentName || "Adversário";
       game.reset();
       currentPly = 0;
       selectedSquare = null;
@@ -211,7 +360,18 @@ function startMultiplayerSearch() {
       legalMoves = [];
       render();
       if (message.gameOver) {
-        showToast(message.result);
+        const change = playerRating && message.ratingChanges?.[playerRating.id];
+        if (change) {
+          playerRating = { ...playerRating, rating: change.after, gamesPlayed: playerRating.gamesPlayed + 1 };
+          updateRatingSummary(playerRating);
+          const difference = change.delta > 0 ? `+${change.delta}` : String(change.delta);
+          showToast(`${message.result} Elo ${change.before} → ${change.after} (${difference}).`);
+          loadRatingDashboard();
+        } else if (message.ratingError) {
+          showToast(`${message.result} O rating não pôde ser salvo.`);
+        } else {
+          showToast(message.result);
+        }
       }
       return;
     }
@@ -441,7 +601,13 @@ function updateStatus() {
   document.querySelector("#move-count").textContent = `${moveCount} ${moveCount === 1 ? "lance" : "lances"}`;
   document.querySelector("#player-state").textContent = humanColor === "w" ? "brancas" : "pretas";
   document.querySelector(".engine-token").textContent = isMultiplayer ? "•" : "S";
-  document.querySelector("#opponent-name").textContent = isMultiplayer ? "Adversário" : "Stockfish";
+  document.querySelector("#opponent-name").textContent = isMultiplayer
+    ? `${multiplayerOpponentName}${opponentRating === null ? "" : ` · ${opponentRating}`}`
+    : "Stockfish";
+  document.querySelector("#player-rating-state").hidden = !isMultiplayer;
+  document.querySelector("#player-rating-state").textContent = isMultiplayer && playerRating
+    ? `Elo ${playerRating.rating}`
+    : isMultiplayer ? "Elo indisponível" : "";
   const topIsWhite = humanColor === "b";
   const capturedTop = moves.filter((move) => move.captured && move.color === (topIsWhite ? "w" : "b")).map((move) => PIECES[`${move.color === "w" ? "b" : "w"}${move.captured}`]).join(" ");
   const capturedBottom = moves.filter((move) => move.captured && move.color === (humanColor === "w" ? "w" : "b")).map((move) => PIECES[`${move.color === "w" ? "b" : "w"}${move.captured}`]).join(" ");
@@ -514,6 +680,7 @@ function onSquareClick(event) {
     selectedSquare = null;
     legalMoves = [];
     render();
+    loadRatingDashboard();
     if (mode === "multiplayer") {
       try {
         multiplayerSocket.send(JSON.stringify({
@@ -588,3 +755,4 @@ document.querySelector("#quote-next").addEventListener("click", () => {
 });
 
 render();
+loadRatingDashboard();

@@ -9,8 +9,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="styles.css?v=3" />
-    <script type="module" src="app.js"></script>
+    <link rel="stylesheet" href="styles.css?v=4" />
+    <script type="module" src="app.js?v=elo-rating-2"></script>
   </head>
   <body>
     <svg class="piece-library" aria-hidden="true" focusable="false">
@@ -53,6 +53,23 @@
             <span class="mode-action">Encontrar adversário <span aria-hidden="true">→</span></span>
           </button>
         </div>
+        <section class="rating-dashboard" aria-label="Rating e ranking multiplayer">
+          <div class="rating-summary">
+            <span class="rating-label">SEU ELO <i>·</i> MULTIPLAYER</span>
+            <strong id="rating-value">—</strong>
+            <span class="rating-player" id="player-handle">Carregando perfil</span>
+            <small id="rating-games">Carregando rating...</small>
+          </div>
+          <div class="leaderboard-panel">
+            <div class="leaderboard-heading">
+              <div><span class="rating-label">CLASSIFICAÇÃO GLOBAL</span><h2>Melhores jogadores</h2></div>
+              <span class="leaderboard-column-label">ELO</span>
+            </div>
+            <ol class="leaderboard-list" id="leaderboard" aria-live="polite">
+              <li class="leaderboard-empty">Carregando ranking...</li>
+            </ol>
+          </div>
+        </section>
         <p class="mode-footnote">Multiplayer anônimo · sem cadastro</p>
       </main>
 
@@ -91,7 +108,7 @@
             </div>
             <noscript><p class="noscript-note">Para jogar e usar o engine, abra o site em um navegador com JavaScript ativado.</p></noscript>
             <div class="player-rail player-bottom">
-              <span class="player-token human-token">L</span><div class="player-meta"><strong>Você</strong><small id="player-state">brancas</small></div><span class="captured" id="captured-bottom"></span>
+              <span class="player-token human-token">L</span><div class="player-meta"><strong>Você</strong><small id="player-state">brancas</small><small id="player-rating-state" hidden></small></div><span class="captured" id="captured-bottom"></span>
             </div>
           </div>
 

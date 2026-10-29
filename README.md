@@ -23,6 +23,14 @@ O modo multiplayer usa um servidor WebSocket separado do GitHub Pages. Para publ
 
 O servidor valida os lances com `chess.js` e aceita conexões do GitHub Pages e dos endereços locais de desenvolvimento configurados em `ALLOWED_ORIGINS`.
 
+### Rating Elo multiplayer
+
+- O Elo começa em **1200** e usa fator **K = 32**. Só partidas multiplayer concluídas pelo servidor alteram a pontuação; partidas solo não contam.
+- O ranking é público. Visitantes não precisam criar conta: o perfil fica salvo neste navegador. Limpar os dados do site cria um novo perfil e não transfere o rating para outro dispositivo.
+- A persistência usa o projeto PostgreSQL gratuito `xeque-ratings` no Neon. O armazenamento gratuito do Render expira após 30 dias, portanto não use um banco local ou Render Free para guardar o ranking.
+- No Neon, abra o projeto `xeque-ratings`, escolha **Connect** e copie a connection string PostgreSQL. No Render, abra o serviço `xadrez-multiplayer`, vá a **Environment** e adicione `DATABASE_URL` com essa connection string. Salve para disparar um novo deploy. Não coloque essa credencial no GitHub nem a compartilhe em mensagens.
+- Após o deploy, `https://xadrez-multiplayer-qxxf.onrender.com/api/leaderboard?limit=5` deve responder JSON. O segredo dos perfis anônimos é inicializado e armazenado no banco pelo servidor.
+
 ## Publicar no GitHub Pages
 
 O workflow em `.github/workflows/pages.yml` publica o site automaticamente quando há um push na branch `main`.

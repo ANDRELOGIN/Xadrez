@@ -11,3 +11,5 @@ services:
         value: 22.14.0
       - key: ALLOWED_ORIGINS
         value: https://andrelogin.github.io,http://localhost:4173,http://127.0.0.1:4173
+      - key: DATABASE_URL
+        sync: false
