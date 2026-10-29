@@ -178,15 +178,21 @@ h1 em { color: var(--lime); font-style: normal; }
 }
 @media (min-width: 681px) {
   .app-shell { height: 100vh; height: 100dvh; min-height: 0; }
-  .topbar { flex: 0 0 78px; }
-  .workspace { flex: 1 1 auto; min-height: 0; margin: 8px auto; grid-template-rows: minmax(0, 1fr) auto; column-gap: clamp(18px, 4vw, 56px); row-gap: 12px; }
+  .topbar { flex: 0 0 64px; }
+  .workspace { flex: 1 1 auto; min-height: 0; margin: 2px auto; grid-template-rows: minmax(0, 1fr) auto; column-gap: clamp(18px, 4vw, 56px); row-gap: 6px; }
   .play-area { align-self: stretch; display: flex; flex-direction: column; min-height: 0; }
-  .board-row { width: min(100%, 610px, calc(100dvh - 432px)); }
+  .play-heading { min-height: 46px; align-items: center; }
+  .eyebrow { display: none; }
+  .board-row { width: min(100%, 610px, calc(100dvh - 274px)); }
+  .player-rail { min-height: 34px; }
+  .player-top { margin-bottom: 6px; }
+  .player-bottom { margin-top: 6px; }
+  .board-footer { margin-top: 6px; }
   .study-panel { height: 100%; overflow: hidden; }
   .opening-block, .mentor, .moves-heading, .panel-bottom { flex-shrink: 0; }
   .move-list { flex: 1 1 auto; max-height: none; }
-  .control-strip { min-height: 58px; }
-  .site-footer { flex: 0 0 50px; min-height: 50px; margin-top: 0; }
+  .control-strip { min-height: 50px; }
+  .site-footer { display: none; }
 }
 @media (max-width: 680px) {
   .workspace { grid-template-columns: minmax(0, 1fr); row-gap: 18px; margin-top: 30px; }
