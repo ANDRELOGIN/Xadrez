@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#17201e" />
+    <meta name="description" content="Uma mesa de xadrez para jogar, estudar aberturas e enfrentar o Stockfish." />
+    <title>xeque — uma partida de cada vez</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+    <script type="module" src="app.js"></script>
+  </head>
+  <body>
+    <svg class="piece-library" aria-hidden="true" focusable="false">
+      <defs>
+        <linearGradient id="ivory-lacquer" x1="0" y1="0" x2="1" y2=".2"><stop stop-color="#fff5da" /><stop offset=".24" stop-color="#d6b17a" /><stop offset=".48" stop-color="#fff0c8" /><stop offset=".72" stop-color="#bd8749" /><stop offset="1" stop-color="#f9e5bd" /></linearGradient>
+        <linearGradient id="ebony-lacquer" x1="0" y1="0" x2="1" y2=".15"><stop stop-color="#a67b52" /><stop offset=".22" stop-color="#302019" /><stop offset=".48" stop-color="#765137" /><stop offset=".7" stop-color="#20140f" /><stop offset="1" stop-color="#795335" /></linearGradient>
+        <symbol id="staunton-pawn" viewBox="0 0 100 112"><path d="M18 103Q19 96 37 92L42 82Q35 76 35 67H65Q65 76 58 82L63 92Q81 96 82 103L76 109H24ZM50 12C62 12 70 21 70 33C70 46 62 54 50 54S30 46 30 33C30 21 38 12 50 12Z"/><path class="staunton-detail" d="M25 101h50M38 91h24M39 76q11 6 22 0"/><ellipse class="staunton-highlight" cx="43" cy="24" rx="5" ry="8"/></symbol>
+        <symbol id="staunton-rook" viewBox="0 0 100 112"><path d="M16 103Q18 96 35 93L39 84H61L65 93Q82 96 84 103L78 109H22ZM27 83V37H73V83ZM23 36V14H35V25H44V14H56V25H65V14H77V36Z"/><path class="staunton-detail" d="M22 101h56M31 78h38M34 43v33M66 43v33M30 33h40"/><path class="staunton-highlight" d="M29 39h4v34h-4zM27 18h5v5h-5z"/></symbol>
+        <symbol id="staunton-knight" viewBox="0 0 100 112"><path d="M17 103Q19 96 36 93L40 84H68Q76 83 80 91L84 103L77 109H23ZM31 85Q25 72 30 60Q35 48 48 42L38 32L43 13L55 27L72 18L77 37L67 47Q79 55 78 69L72 85Z"/><path class="staunton-detail" d="M24 101h53M38 79q12 4 25 0M38 48l19 11M44 21l8 13M55 43l9-5"/><circle cx="60" cy="34" r="3" fill="#24170f"/><path class="staunton-highlight" d="M46 19l5 8-8-3zM34 63q4-9 12-13l5 4-9 8z"/></symbol>
+        <symbol id="staunton-bishop" viewBox="0 0 100 112"><path d="M17 103Q19 96 36 93L41 84H59L64 93Q81 96 83 103L77 109H23ZM31 84Q32 75 40 66L34 55Q29 44 36 34L50 12L64 34Q71 44 66 55L60 66Q68 75 69 84Z"/><path class="staunton-detail" d="M24 101h52M38 79h24M40 65h20M50 24l-7 14 12 8-9 13"/><path class="staunton-highlight" d="M49 19l-7 17 4 3 8-15z"/></symbol>
+        <symbol id="staunton-queen" viewBox="0 0 100 112"><path d="M16 103Q18 96 35 93L39 84H61L65 93Q82 96 84 103L78 109H22ZM29 84L24 48L38 60L50 34L62 60L76 48L71 84Z"/><circle cx="24" cy="40" r="7"/><circle cx="38" cy="52" r="6"/><circle cx="50" cy="27" r="8"/><circle cx="62" cy="52" r="6"/><circle cx="76" cy="40" r="7"/><path class="staunton-detail" d="M23 101h54M34 79h32M31 55l8 8m30-8-8 8"/><path class="staunton-highlight" d="M48 22q3-4 5 0l-2 6zM23 37q4-4 6 0l-3 5z"/></symbol>
+        <symbol id="staunton-king" viewBox="0 0 100 112"><path d="M16 103Q18 96 35 93L39 84H61L65 93Q82 96 84 103L78 109H22ZM30 84L34 55Q36 43 45 39V30H55V39Q64 43 66 55L70 84Z"/><path d="M45 32V13H39V7H45V1H55V7H61V13H55V32Z"/><path class="staunton-detail" d="M23 101h54M36 79h28M39 53q11 5 22 0M50 18v8"/><path class="staunton-highlight" d="M41 47q3-6 7-6v8l-8 2zM47 4h4v6h-4z"/></symbol>
+      </defs>
+    </svg>
+    <div class="app-shell">
+      <header class="topbar">
+        <a class="wordmark" href="#" aria-label="Xeque, início"><span class="brand-mark">x</span>xeque<span class="brand-period">.</span></a>
+        <nav class="main-nav" aria-label="Navegação principal">
+          <a class="nav-link active" href="#partida">Partida</a>
+          <a class="nav-link" href="#estudo">Estudo</a>
+        </nav>
+        <div class="topbar-right"><span class="online-dot"></span><span class="status-label">mesa aberta</span><button class="profile-button" type="button" aria-label="Perfil">L</button></div>
+      </header>
+
+      <main class="workspace" id="partida">
+        <section class="play-area" aria-label="Tabuleiro de xadrez">
+          <div class="play-heading">
+            <div><p class="eyebrow">PARTIDA LIVRE <span>·</span> 001</p><h1>Seu próximo <em>movimento.</em></h1></div>
+            <div class="game-clock"><span class="clock-dot"></span><span id="turn-label">Sua vez</span><strong id="clock-label">∞</strong></div>
+          </div>
+
+          <div class="board-row">
+            <div class="player-rail player-top">
+              <span class="player-token engine-token">S</span><div class="player-meta"><strong>Stockfish</strong><small id="engine-state">carregando engine</small></div><span class="captured" id="captured-top"></span>
+            </div>
+            <div class="board-wrap">
+              <div class="board" id="board" role="grid" aria-label="Tabuleiro de xadrez">
+                <svg class="static-board" viewBox="0 0 512 512" aria-hidden="true">
+                  <defs><pattern id="wood-squares" width="128" height="128" patternUnits="userSpaceOnUse"><rect width="128" height="128" fill="#dfc18d" /><rect x="64" width="64" height="64" fill="#79502f" /><rect y="64" width="64" height="64" fill="#79502f" /></pattern></defs>
+                  <rect width="512" height="512" fill="url(#wood-squares)" />
+                  <g class="static-black" text-anchor="middle" font-family="serif" font-size="52"><text x="32" y="46">♜</text><text x="96" y="46">♞</text><text x="160" y="46">♝</text><text x="224" y="46">♛</text><text x="288" y="46">♚</text><text x="352" y="46">♝</text><text x="416" y="46">♞</text><text x="480" y="46">♜</text><text x="32" y="110">♟</text><text x="96" y="110">♟</text><text x="160" y="110">♟</text><text x="224" y="110">♟</text><text x="288" y="110">♟</text><text x="352" y="110">♟</text><text x="416" y="110">♟</text><text x="480" y="110">♟</text></g>
+                  <g class="static-white" text-anchor="middle" font-family="serif" font-size="52"><text x="32" y="366">♟</text><text x="96" y="366">♟</text><text x="160" y="366">♟</text><text x="224" y="366">♟</text><text x="288" y="366">♟</text><text x="352" y="366">♟</text><text x="416" y="366">♟</text><text x="480" y="366">♟</text><text x="32" y="494">♜</text><text x="96" y="494">♞</text><text x="160" y="494">♝</text><text x="224" y="494">♛</text><text x="288" y="494">♚</text><text x="352" y="494">♝</text><text x="416" y="494">♞</text><text x="480" y="494">♜</text></g>
+                </svg>
+              </div>
+            </div>
+            <noscript><p class="noscript-note">Para jogar e usar o engine, abra o site em um navegador com JavaScript ativado.</p></noscript>
+            <div class="player-rail player-bottom">
+              <span class="player-token human-token">L</span><div class="player-meta"><strong>Você</strong><small id="player-state">brancas</small></div><span class="captured" id="captured-bottom"></span>
+            </div>
+          </div>
+
+          <div class="board-footer">
+            <span class="board-note"><span class="note-icon">↳</span> Clique numa peça e depois numa casa</span>
+            <span class="board-coordinates">a—h&nbsp;&nbsp;·&nbsp;&nbsp;1—8</span>
+          </div>
+        </section>
+
+        <aside class="study-panel" id="estudo" aria-label="Lances e abertura">
+          <div class="panel-topline"><span>ANÁLISE DA PARTIDA</span><span class="live-tag"><i></i> AO VIVO</span></div>
+          <div class="opening-block">
+            <div class="opening-overline"><span id="opening-eco">ECO —</span><span class="opening-flourish">✳</span></div>
+            <h2 id="opening-name">Abertura inicial</h2>
+            <p id="opening-detail">A abertura aparece conforme os lances acontecem.</p>
+          </div>
+          <section class="mentor" aria-label="Mateuzito, ajudante virtual">
+            <svg class="mentor-figure" viewBox="0 0 100 112" role="img" aria-label="Mateuzito, personagem de quadrinhos">
+              <path class="mentor-spark" d="M12 25l4 7 8 1-6 5 1 8-7-4-7 4 2-8-6-5 8-1z" />
+              <path class="mentor-body" d="M13 105c1-20 12-31 37-31s37 11 38 31v7H13z" />
+              <path class="mentor-shirt" d="M39 76l11 12 11-12 10 5-9 31H38l-9-31z" />
+              <path class="mentor-neck" d="M42 66h16v16c-4 5-12 5-16 0z" />
+              <path class="mentor-ear" d="M27 44c-8-3-10 7-5 13 3 3 6 2 8-1m42-12c8-3 10 7 5 13-3 3-6 2-8-1" />
+              <path class="mentor-face" d="M29 36c0-17 9-27 21-27s22 10 22 27v18c0 15-10 23-22 23S29 69 29 54z" />
+              <path class="mentor-hair" d="M27 43c-4-24 8-36 25-36 15 0 24 11 23 29l-7-7-5-10-12 9-14-2-4 12-6 5z" />
+              <path class="mentor-glasses" d="M32 43h15c4 0 6 3 6 7s-2 8-7 8h-7c-5 0-7-4-7-8zm21 4c2-3 4-4 7-4h10v7c0 5-3 8-7 8h-5c-5 0-7-3-7-8m-21-5 5 1m33 0 5-1" />
+              <path class="mentor-eyes" d="M40 48v3m22-3v3" />
+              <path class="mentor-mouth" d="M43 64c4 4 10 4 14 0" />
+              <path class="mentor-hand" d="M78 93c-3-7-3-13 1-15 3-1 5 2 5 7l4-7c2-3 6-1 4 3l-5 12 8 8-11 8-8-8z" />
+              <path class="mentor-outline" d="M13 105c1-20 12-31 37-31s37 11 38 31v7H13zM42 66h16v16c-4 5-12 5-16 0z" />
+            </svg>
+            <div class="mentor-copy">
+              <div class="mentor-heading"><div><h3>Mateuzito</h3><span>AJUDANTE DE TABULEIRO</span></div><span class="mentor-badge">M!</span></div>
+              <div class="mentor-speech" aria-live="polite"><strong>“ma dondeque!”</strong><p id="mentor-tip">No xadrez, comece disputando o centro com um peão.</p></div>
+            </div>
+            <div class="mentor-quote">
+              <span class="quote-label">DO CADERNO DOS MESTRES</span>
+              <blockquote id="mentor-quote">“Ao ver um bom lance, procure um melhor.”</blockquote>
+              <div class="quote-footer"><cite id="mentor-author">Emanuel Lasker</cite><button class="quote-next" id="quote-next" type="button" title="Outra frase" aria-label="Mostrar outra frase">↻</button></div>
+            </div>
+          </section>
+          <div class="moves-heading"><h3>Notação</h3><span id="move-count">0 lances</span></div>
+          <div class="move-list" id="move-list" aria-live="polite"><div class="empty-state"><span class="empty-icon">♘</span><p>A partida começa<br />com <strong>1. e4</strong> ou qualquer outro lance.</p></div></div>
+          <div class="panel-bottom">
+            <div class="navigation-controls" aria-label="Navegar pelos lances">
+              <button class="icon-button" id="first-move" type="button" title="Início" aria-label="Ir ao início">|◀</button>
+              <button class="icon-button" id="previous-move" type="button" title="Lance anterior" aria-label="Lance anterior">‹</button>
+              <button class="icon-button" id="next-move" type="button" title="Próximo lance" aria-label="Próximo lance">›</button>
+              <button class="icon-button" id="last-move" type="button" title="Último lance" aria-label="Ir ao último lance">▶|</button>
+            </div>
+            <span class="notation-hint">SAN + coordenadas</span>
+          </div>
+        </aside>
+
+        <section class="control-strip" aria-label="Controles da partida">
+          <div class="control-group">
+            <label for="side-select">Jogar de</label>
+            <select id="side-select"><option value="w">Brancas</option><option value="b">Pretas</option></select>
+          </div>
+          <div class="control-group difficulty-control">
+            <label for="depth-select">Força do engine</label>
+            <select id="depth-select"><option value="4">Tranquilo</option><option value="8" selected>Clube</option><option value="12">Avançado</option></select>
+          </div>
+          <div class="control-spacer"></div>
+          <button class="text-action" id="undo-button" type="button" title="Desfazer último lance"><span aria-hidden="true">↶</span> Desfazer</button>
+          <button class="new-game-button" id="new-game-button" type="button"><span aria-hidden="true">＋</span> Nova partida</button>
+        </section>
+      </main>
+      <footer class="site-footer"><span>FEITO PARA PENSAR UM LANCE À FRENTE</span><span>STOCKFISH 19 <i>·</i> ENGINE NO NAVEGADOR</span></footer>
+    </div>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  </body>
+</html>
