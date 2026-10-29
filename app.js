@@ -30,7 +30,7 @@ const CHESS_QUOTES = [
   { text: "Os erros estão todos no tabuleiro, esperando para serem cometidos.", author: "Savielly Tartakower" },
 ];
 
-const MULTIPLAYER_SERVER_URL = "wss://xadrez-multiplayer.onrender.com";
+const MULTIPLAYER_SERVER_URL = "wss://xadrez-multiplayer-qxxf.onrender.com";
 let game = new Chess();
 const boardElement = document.querySelector("#board");
 const moveListElement = document.querySelector("#move-list");

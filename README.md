@@ -18,7 +18,7 @@ O modo multiplayer usa um servidor WebSocket separado do GitHub Pages. Para publ
 
 1. Envie os arquivos do projeto, incluindo `server.js`, `package.json` e `render.yaml`, para a branch `main`.
 2. No Render, escolha **New > Blueprint** e conecte o repositório `ANDRELOGIN/Xadrez`. O Render usará `render.yaml` para criar o serviço gratuito `xadrez-multiplayer`.
-3. Aguarde o serviço ficar **Live** e confirme que `https://xadrez-multiplayer.onrender.com/health` responde `ok`.
+3. Aguarde o serviço ficar **Live** e confirme que `https://xadrez-multiplayer-qxxf.onrender.com/health` responde `ok`.
 4. O site continua disponível em `https://andrelogin.github.io/Xadrez/`; o multiplayer pode demorar alguns instantes para responder quando o servidor gratuito estiver iniciando após inatividade.
 
 O servidor valida os lances com `chess.js` e aceita conexões do GitHub Pages e dos endereços locais de desenvolvimento configurados em `ALLOWED_ORIGINS`.
